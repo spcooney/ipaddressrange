@@ -1,19 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2027
+# Visual Studio 2013
+VisualStudioVersion = 12.0.40629.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IPAddressRange", "IPAddressRange\IPAddressRange.csproj", "{D3DEA965-247F-4C4C-B3B0-44A039C75A5C}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IPAddressRange.Test", "IPAddressRange.Test\IPAddressRange.Test.csproj", "{4B6A09CA-5FFA-4C04-81F0-B5E706E3F6D3}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "IPAddressRange.Test.Core", "IPAddressRange.Test.Core\IPAddressRange.Test.Core.csproj", "{6A4B647D-B2FF-41C4-81BA-9C710AFFBA42}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "README", "README", "{2377036E-5896-4E09-949F-4307D0A2F39D}"
 	ProjectSection(SolutionItems) = preProject
 		LICENSE = LICENSE
 		README.md = README.md
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IPAddressRange", "IPAddressRange\IPAddressRange.csproj", "{B166E28A-7C80-48A4-BE33-08FBF4D4B6BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IPAddressRange.Test", "IPAddressRange.Test\IPAddressRange.Test.csproj", "{F3F717CA-2784-4CD2-BD80-345132AB3BC3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,16 +19,14 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D3DEA965-247F-4C4C-B3B0-44A039C75A5C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D3DEA965-247F-4C4C-B3B0-44A039C75A5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D3DEA965-247F-4C4C-B3B0-44A039C75A5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D3DEA965-247F-4C4C-B3B0-44A039C75A5C}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4B6A09CA-5FFA-4C04-81F0-B5E706E3F6D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4B6A09CA-5FFA-4C04-81F0-B5E706E3F6D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4B6A09CA-5FFA-4C04-81F0-B5E706E3F6D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6A4B647D-B2FF-41C4-81BA-9C710AFFBA42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6A4B647D-B2FF-41C4-81BA-9C710AFFBA42}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6A4B647D-B2FF-41C4-81BA-9C710AFFBA42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B166E28A-7C80-48A4-BE33-08FBF4D4B6BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B166E28A-7C80-48A4-BE33-08FBF4D4B6BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B166E28A-7C80-48A4-BE33-08FBF4D4B6BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B166E28A-7C80-48A4-BE33-08FBF4D4B6BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F3F717CA-2784-4CD2-BD80-345132AB3BC3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3F717CA-2784-4CD2-BD80-345132AB3BC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3F717CA-2784-4CD2-BD80-345132AB3BC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3F717CA-2784-4CD2-BD80-345132AB3BC3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

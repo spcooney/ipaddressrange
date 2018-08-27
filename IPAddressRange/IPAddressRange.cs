@@ -1,66 +1,21 @@
-﻿using System;
-using System.Linq;
-using System.Collections;
-using System.Collections.Generic;
-using System.Net;
-using System.Text.RegularExpressions;
-using System.ComponentModel;
-
-#if NET45
-using System.Runtime.Serialization;
-#endif
-
-namespace NetTools
+﻿namespace NetTools
 {
-    // NOTE: Why implement IReadOnlyDictionary<TKey,TVal> interface? 
-    // =============================================================
-    // Problem
-    // ----------
-    // An IPAddressRange after v.1.4 object cann't serialize to/deserialize from JSON text by using JSON.NET.
-    //
-    // Details
-    // ----------
-    // JSON.NET detect IEnumerable<IPAddress> interface prior to ISerializable. 
-    // At a result, JSON.NET try to serialize IPAddressRange as array, such as "["192.168.0.1", "192.168.0.2"]".
-    // This is unexpected behavior. (We expect "{"Begin":"192.168.0.1", "End:"192.168.0.2"}" style JSON text that is same with DataContractJsonSerializer.)
-    // In addition, JSON serialization with JSON.NET crash due to IPAddress cann't serialize by JSON.NET.
-    //
-    // Work around
-    // -----------
-    // To avoid this JSON.NET behavior, IPAddressRange should implement more high priority interface than IEnumerable<T> in JSON.NET.
-    // Such interfaces include the following.
-    // - IDictionary
-    // - IDictionary<TKey,TVal>
-    // - IReadOnlyDictionary<TKey,TVal>
-    // But, when IPAddressRange implement IDictionay or IDictionary<TKey,TVal>, serialization by DataContractJsonSerializer was broken.
-    // (Implementation of DataContractJsonSerializer is special for IDictionay and IDictionary<TKey,TVal>)
-    // 
-    // So there is no way without implement IReadOnlyDictionary<TKey,TVal>.
-    //
-    // Trade off
-    // -------------
-    // IReadOnlyDictionary<TKey,TVal> interface doesn't exist in .NET Framework v.4.0 or before.
-    // In order to give priority to supporting serialization by JSON.NET, I had to truncate the support for .NET Framework 4.0.
-    // (.NET Standard 1.4 support IReadOnlyDictionary<TKey,TVal>, therefore there is no problem on .NET Core appliction.)
-    // 
-    // Binary level compatiblity
-    // -------------------------
-    // There is no problem even if IPAddressRange.dll is replaced with the latest version.
-    // 
-    // Source code level compatiblity
-    // -------------------------
-    // You cann't apply LINQ extension methods directory to IPAddressRange object.
-    // Because IPAddressRange implement two types of IEnumerable<T> (IEnumerable<IPaddress> and IEnumerable<KeyValuePair<K,V>>).
-    // It cause ambiguous syntax error.
-    // To avoid this error, you should use "AsEnumerable()" method before IEnumerable<IPAddressRange> access.
+    using System;
+    using System.Collections;
+    using System.Collections.Generic;
+    using System.ComponentModel;
+    using System.Linq;
+    using System.Net;
+    using System.Text.RegularExpressions;
 
-#if NET45
-    [Serializable]
-    public class IPAddressRange : ISerializable, IEnumerable<IPAddress>, IReadOnlyDictionary<string, string>
-#else
-    public class IPAddressRange : IEnumerable<IPAddress>, IReadOnlyDictionary<string, string>
-#endif
+    /// <summary>
+    /// Represents a range of IP addresses.
+    /// </summary>
+    /// <see cref="https://github.com/jsakamoto/ipaddressrange" />
+    public class IPAddressRange : IEnumerable<IPAddress>, IDictionary<string, string>
     {
+        #region "Properties"
+
         // Pattern 1. CIDR range: "192.168.0.0/24", "fe80::%lo0/10"
         private static Regex m1_regex = new Regex(@"^(?<adr>([\d.]+)|([\da-f:]+(:[\d.]+)?(%\w+)?))[ \t]*/[ \t]*(?<maskLen>\d+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
@@ -75,23 +30,29 @@ namespace NetTools
         private static Regex m4_regex = new Regex(@"^(?<adr>([\d.]+)|([\da-f:]+(:[\d.]+)?(%\w+)?))[ \t]*/[ \t]*(?<bitmask>[\da-f\.:]+)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
 
         public IPAddress Begin { get; set; }
-
         public IPAddress End { get; set; }
+
+        #endregion
+
+        #region "Constructors"
 
         /// <summary>
         /// Creates an empty range object, equivalent to "0.0.0.0/0".
         /// </summary>
-        public IPAddressRange() : this(new IPAddress(0L)) { }
+        public IPAddressRange() : this(new IPAddress(0L)) 
+        { 
+        }
 
         /// <summary>
-        /// Creates a new range with the same start/end address (range of one)
+        /// Creates a new range with the same start/end address (range of one).
         /// </summary>
         /// <param name="singleAddress"></param>
         public IPAddressRange(IPAddress singleAddress)
         {
             if (singleAddress == null)
-                throw new ArgumentNullException(nameof(singleAddress));
-
+            {
+                throw new ArgumentNullException("singleAddress");
+            }
             Begin = End = singleAddress;
         }
 
@@ -103,19 +64,25 @@ namespace NetTools
         public IPAddressRange(IPAddress begin, IPAddress end)
         {
             if (begin == null)
-                throw new ArgumentNullException(nameof(begin));
-
+            {
+                throw new ArgumentNullException("begin");
+            }
             if (end == null)
-                throw new ArgumentNullException(nameof(end));
-
+            {
+                throw new ArgumentNullException("end");
+            }
             Begin = new IPAddress(begin.GetAddressBytes());
             End = new IPAddress(end.GetAddressBytes());
-
-            if (Begin.AddressFamily != End.AddressFamily) throw new ArgumentException("Elements must be of the same address family", nameof(end));
-
+            if (Begin.AddressFamily != End.AddressFamily)
+            {
+                throw new ArgumentException("Elements must be of the same address family", "end");
+            }
             var beginBytes = Begin.GetAddressBytes();
             var endBytes = End.GetAddressBytes();
-            if (!Bits.GtECore(endBytes, beginBytes)) throw new ArgumentException("Begin must be smaller than the End", nameof(begin));
+            if (!BitsUtil.GtECore(endBytes, beginBytes))
+            {
+                throw new ArgumentException("Begin must be smaller than the End", "begin");
+            }
         }
 
         /// <summary>
@@ -128,15 +95,18 @@ namespace NetTools
         public IPAddressRange(IPAddress baseAddress, int maskLength)
         {
             if (baseAddress == null)
-                throw new ArgumentNullException(nameof(baseAddress));
-
+            {
+                throw new ArgumentNullException("baseAddress");
+            }
             var baseAdrBytes = baseAddress.GetAddressBytes();
-            if (baseAdrBytes.Length * 8 < maskLength) throw new FormatException();
-            var maskBytes = Bits.GetBitMask(baseAdrBytes.Length, maskLength);
-            baseAdrBytes = Bits.And(baseAdrBytes, maskBytes);
-
+            if (baseAdrBytes.Length * 8 < maskLength)
+            {
+                throw new FormatException();
+            }
+            var maskBytes = BitsUtil.GetBitMask(baseAdrBytes.Length, maskLength);
+            baseAdrBytes = BitsUtil.And(baseAdrBytes, maskBytes);
             Begin = new IPAddress(baseAdrBytes);
-            End = new IPAddress(Bits.Or(baseAdrBytes, Bits.Not(maskBytes)));
+            End = new IPAddress(BitsUtil.Or(baseAdrBytes, BitsUtil.Not(maskBytes)));
         }
 
         [EditorBrowsable(EditorBrowsableState.Never), Obsolete("Use IPAddressRange.Parse static method instead.")]
@@ -147,91 +117,82 @@ namespace NetTools
             End = parsed.End;
         }
 
-#if NET45
-        protected IPAddressRange(SerializationInfo info, StreamingContext context)
-        {
-            var names = new List<string>();
-            foreach (var item in info) names.Add(item.Name);
+        #endregion
 
-            Func<string, IPAddress> deserialize = (name) => names.Contains(name) ?
-                 IPAddress.Parse(info.GetValue(name, typeof(object)).ToString()) :
-                 new IPAddress(0L);
-
-            this.Begin = deserialize("Begin");
-            this.End = deserialize("End");
-        }
-
-        public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
-        {
-            if (info == null) throw new ArgumentNullException(nameof(info));
-
-            info.AddValue("Begin", this.Begin != null ? this.Begin.ToString() : "");
-            info.AddValue("End", this.End != null ? this.End.ToString() : "");
-        }
-#endif
+        #region "Methods"
 
         public bool Contains(IPAddress ipaddress)
         {
             if (ipaddress == null)
-                throw new ArgumentNullException(nameof(ipaddress));
-
-            if (ipaddress.AddressFamily != this.Begin.AddressFamily) return false;
-
+            {
+                throw new ArgumentNullException("ipaddress");
+            }
+            if (ipaddress.AddressFamily != this.Begin.AddressFamily)
+            {
+                return false;
+            }
             var offset = 0;
             if (Begin.IsIPv4MappedToIPv6 && ipaddress.IsIPv4MappedToIPv6)
             {
                 offset = 12; //ipv4 has prefix of 10 zero bytes and two 255 bytes. 
             }
-
             var adrBytes = ipaddress.GetAddressBytes();
-            return Bits.LtECore(this.Begin.GetAddressBytes(), adrBytes, offset) && Bits.GtECore(this.End.GetAddressBytes(), adrBytes, offset);
+            return
+                BitsUtil.LtECore(this.Begin.GetAddressBytes(), adrBytes, offset) &&
+                BitsUtil.GtECore(this.End.GetAddressBytes(), adrBytes, offset);
         }
 
         public bool Contains(IPAddressRange range)
         {
             if (range == null)
-                throw new ArgumentNullException(nameof(range));
-
-            if (this.Begin.AddressFamily != range.Begin.AddressFamily) return false;
-
+            {
+                throw new ArgumentNullException("range");
+            }
+            if (this.Begin.AddressFamily != range.Begin.AddressFamily)
+            {
+                return false;
+            }
             var offset = 0;
             if (Begin.IsIPv4MappedToIPv6 && range.Begin.IsIPv4MappedToIPv6)
             {
                 offset = 12; //ipv4 has prefix of 10 zero bytes and two 255 bytes. 
             }
-
             return
-                Bits.LtECore(this.Begin.GetAddressBytes(), range.Begin.GetAddressBytes(), offset) &&
-                Bits.GtECore(this.End.GetAddressBytes(), range.End.GetAddressBytes(), offset);
+                BitsUtil.LtECore(this.Begin.GetAddressBytes(), range.Begin.GetAddressBytes(), offset) &&
+                BitsUtil.GtECore(this.End.GetAddressBytes(), range.End.GetAddressBytes(), offset);
+        }
+
+        private static string StripScopeIP(string ipAddr)
+        {
+            return ipAddr.Split('%')[0];
         }
 
         public static IPAddressRange Parse(string ipRangeString)
         {
-            if (ipRangeString == null) throw new ArgumentNullException(nameof(ipRangeString));
-
+            if (ipRangeString == null)
+            {
+                throw new ArgumentNullException("ipRangeString");
+            }
             // trim white spaces.
             ipRangeString = ipRangeString.Trim();
-
-            // define local funtion to strip scope id in ip address string.
-            string stripScopeId(string ipaddressString) => ipaddressString.Split('%')[0];
 
             // Pattern 1. CIDR range: "192.168.0.0/24", "fe80::/10%eth0"
             var m1 = m1_regex.Match(ipRangeString);
             if (m1.Success)
             {
-                var baseAdrBytes = IPAddress.Parse(stripScopeId(m1.Groups["adr"].Value)).GetAddressBytes();
+                var baseAdrBytes = IPAddress.Parse(StripScopeIP(m1.Groups["adr"].Value)).GetAddressBytes();
                 var maskLen = int.Parse(m1.Groups["maskLen"].Value);
                 if (baseAdrBytes.Length * 8 < maskLen) throw new FormatException();
-                var maskBytes = Bits.GetBitMask(baseAdrBytes.Length, maskLen);
-                baseAdrBytes = Bits.And(baseAdrBytes, maskBytes);
-                return new IPAddressRange(new IPAddress(baseAdrBytes), new IPAddress(Bits.Or(baseAdrBytes, Bits.Not(maskBytes))));
+                var maskBytes = BitsUtil.GetBitMask(baseAdrBytes.Length, maskLen);
+                baseAdrBytes = BitsUtil.And(baseAdrBytes, maskBytes);
+                return new IPAddressRange(new IPAddress(baseAdrBytes), new IPAddress(BitsUtil.Or(baseAdrBytes, BitsUtil.Not(maskBytes))));
             }
 
             // Pattern 2. Uni address: "127.0.0.1", ":;1"
             var m2 = m2_regex.Match(ipRangeString);
             if (m2.Success)
             {
-                return new IPAddressRange(IPAddress.Parse(stripScopeId(ipRangeString)));
+                return new IPAddressRange(IPAddress.Parse(StripScopeIP(ipRangeString)));
             }
 
             // Pattern 3. Begin end range: "169.258.0.0-169.258.0.255"
@@ -250,20 +211,19 @@ namespace NetTools
                 }
 
                 return new IPAddressRange(
-                    begin: IPAddress.Parse(stripScopeId(begin)),
-                    end: IPAddress.Parse(stripScopeId(end)));
+                    begin: IPAddress.Parse(StripScopeIP(begin)),
+                    end: IPAddress.Parse(StripScopeIP(end)));
             }
 
             // Pattern 4. Bit mask range: "192.168.0.0/255.255.255.0"
             var m4 = m4_regex.Match(ipRangeString);
             if (m4.Success)
             {
-                var baseAdrBytes = IPAddress.Parse(stripScopeId(m4.Groups["adr"].Value)).GetAddressBytes();
+                var baseAdrBytes = IPAddress.Parse(StripScopeIP(m4.Groups["adr"].Value)).GetAddressBytes();
                 var maskBytes = IPAddress.Parse(m4.Groups["bitmask"].Value).GetAddressBytes();
-                baseAdrBytes = Bits.And(baseAdrBytes, maskBytes);
-                return new IPAddressRange(new IPAddress(baseAdrBytes), new IPAddress(Bits.Or(baseAdrBytes, Bits.Not(maskBytes))));
+                baseAdrBytes = BitsUtil.And(baseAdrBytes, maskBytes);
+                return new IPAddressRange(new IPAddress(baseAdrBytes), new IPAddress(BitsUtil.Or(baseAdrBytes, BitsUtil.Not(maskBytes))));
             }
-
             throw new FormatException("Unknown IP range string.");
         }
 
@@ -285,15 +245,19 @@ namespace NetTools
         /// Takes a subnetmask (eg, "255.255.254.0") and returns the CIDR bit length of that
         /// address. Throws an exception if the passed address is not valid as a subnet mask.
         /// </summary>
-        /// <param name="subnetMask">The subnet mask to use</param>
+        /// <param name="subnetMask">The subnet mask to use.</param>
         /// <returns></returns>
         public static int SubnetMaskLength(IPAddress subnetMask)
         {
             if (subnetMask == null)
-                throw new ArgumentNullException(nameof(subnetMask));
-
-            var length = Bits.GetBitMaskLength(subnetMask.GetAddressBytes());
-            if (length == null) throw new ArgumentException("Not a valid subnet mask", "subnetMask");
+            {
+                throw new ArgumentNullException("subnetMask");
+            }
+            var length = BitsUtil.GetBitMaskLength(subnetMask.GetAddressBytes());
+            if (length == null)
+            {
+                throw new ArgumentException("Not a valid subnet mask", "subnetMask");
+            }
             return length.Value;
         }
 
@@ -301,13 +265,10 @@ namespace NetTools
         {
             var first = Begin.GetAddressBytes();
             var last = End.GetAddressBytes();
-            for (var ip = first; Bits.LtECore(ip, last); ip = Bits.Increment(ip))
+            for (var ip = first; BitsUtil.LtECore(ip, last); ip = BitsUtil.Increment(ip))
+            {
                 yield return new IPAddress(ip);
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
+            }
         }
 
         /// <summary>
@@ -330,77 +291,153 @@ namespace NetTools
             {
                 return byteBegin.Length * 8;
             }
-
-            int length = byteBegin.Length * 8;
-
+            int length = (byteBegin.Length * 8);
             for (int i = 0; i < length; i++)
             {
-                byte[] mask = Bits.GetBitMask(byteBegin.Length, i);
-                if (new IPAddress(Bits.And(byteBegin, mask)).Equals(Begin))
+                byte[] mask = BitsUtil.GetBitMask(byteBegin.Length, i);
+                if (new IPAddress(BitsUtil.And(byteBegin, mask)).Equals(Begin))
                 {
-                    if (new IPAddress(Bits.Or(byteBegin, Bits.Not(mask))).Equals(End))
+                    if (new IPAddress(BitsUtil.Or(byteBegin, BitsUtil.Not(mask))).Equals(End))
                     {
                         return i;
                     }
                 }
             }
-            throw new FormatException(string.Format("{0} is not a CIDR Subnet", ToString()));
+            throw new FormatException(String.Format("{0} is not a CIDR Subnet", ToString()));
         }
 
         /// <summary>
-        /// Returns a Cidr String if this matches exactly a Cidr subnet
+        /// Returns a Cidr String if this matches exactly a Cidr subnet.
         /// </summary>
         public string ToCidrString()
         {
             return string.Format("{0}/{1}", Begin, GetPrefixLength());
-        }
-
-        #region JSON.NET Support by implement IReadOnlyDictionary<string, string>
-
-        [EditorBrowsable(EditorBrowsableState.Never)]
-        public IPAddressRange(IEnumerable<KeyValuePair<string, string>> items)
-        {
-            this.Begin = IPAddress.Parse(TryGetValue(items, nameof(Begin), out var value1) ? value1 : throw new KeyNotFoundException());
-            this.End = IPAddress.Parse(TryGetValue(items, nameof(End), out var value2) ? value2 : throw new KeyNotFoundException());
-        }
+        }  
 
         /// <summary>
-        /// Returns the input typed as IEnumerable&lt;IPAddress&gt;
+        /// Returns the input typed as IEnumerable&lt;IPAddress&gt;.
         /// </summary>
-        public IEnumerable<IPAddress> AsEnumerable() => (this as IEnumerable<IPAddress>);
+        public IEnumerable<IPAddress> AsEnumerable()
+        {
+            return (this as IEnumerable<IPAddress>);
+        }
 
         private IEnumerable<KeyValuePair<string, string>> GetDictionaryItems()
         {
             return new[] {
-                new KeyValuePair<string,string>(nameof(Begin), Begin.ToString()),
-                new KeyValuePair<string,string>(nameof(End), End.ToString()),
+                new KeyValuePair<string, string>("Begin", Begin.ToString()),
+                new KeyValuePair<string, string>("End", End.ToString()),
             };
         }
 
-        private bool TryGetValue(string key, out string value) => TryGetValue(GetDictionaryItems(), key, out value);
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
+
+        private bool TryGetValue(string key, out string value)
+        {
+            return TryGetValue(GetDictionaryItems(), key, out value);
+        }
 
         private bool TryGetValue(IEnumerable<KeyValuePair<string, string>> items, string key, out string value)
         {
-            items = items ?? GetDictionaryItems();
+            items = (items ?? GetDictionaryItems());
             var foundItem = items.FirstOrDefault(item => item.Key == key);
             value = foundItem.Value;
             return foundItem.Key != null;
         }
 
-        IEnumerable<string> IReadOnlyDictionary<string, string>.Keys => GetDictionaryItems().Select(item => item.Key);
+        public void Add(string key, string value)
+        {
+            throw new NotImplementedException();
+        }
 
-        IEnumerable<string> IReadOnlyDictionary<string, string>.Values => GetDictionaryItems().Select(item => item.Value);
+        public bool ContainsKey(string key)
+        {
+            return GetDictionaryItems().Any(i => i.Key == key);
+        }
 
-        int IReadOnlyCollection<KeyValuePair<string, string>>.Count => GetDictionaryItems().Count();
+        public ICollection<string> Keys
+        {
+            get { throw new NotImplementedException(); }
+        }
 
-        string IReadOnlyDictionary<string, string>.this[string key] => TryGetValue(key, out var value) ? value : throw new KeyNotFoundException();
+        public bool Remove(string key)
+        {
+            throw new NotImplementedException();
+        }
 
-        bool IReadOnlyDictionary<string, string>.ContainsKey(string key) => GetDictionaryItems().Any(item => item.Key == key);
+        bool IDictionary<string, string>.TryGetValue(string key, out string value)
+        {
+            throw new NotImplementedException();
+        }
 
-        bool IReadOnlyDictionary<string, string>.TryGetValue(string key, out string value) => TryGetValue(key, out value);
+        public void Add(KeyValuePair<string, string> item)
+        {
+            throw new NotImplementedException();
+        }
 
-        IEnumerator<KeyValuePair<string, string>> IEnumerable<KeyValuePair<string, string>>.GetEnumerator() => GetDictionaryItems().GetEnumerator();
+        public void Clear()
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Contains(KeyValuePair<string, string> item)
+        {
+            return GetDictionaryItems().Contains(item);
+        }
+
+        public void CopyTo(KeyValuePair<string, string>[] array, int arrayIndex)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool Remove(KeyValuePair<string, string> item)
+        {
+            throw new NotImplementedException();
+        }
+
+        IEnumerator<KeyValuePair<string, string>> IEnumerable<KeyValuePair<string, string>>.GetEnumerator()
+        {
+            return GetDictionaryItems().GetEnumerator();
+        }
 
         #endregion
+
+        public ICollection<string> Values
+        {
+            get { throw new NotImplementedException(); }
+        }
+
+        public string this[string key]
+        {
+            get
+            {
+                string value;
+                if (TryGetValue(key, out value))
+                {
+                    return value;
+                }
+                return String.Empty;
+            }
+            set
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+        public int Count
+        {
+            get 
+            { 
+                return GetDictionaryItems().Count();
+            }
+        }
+
+        public bool IsReadOnly
+        {
+            get { return false; }
+        }
     }
 }

@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("IPAddressRange.Test")]
+[assembly: AssemblyTitle("IPAddressRange")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("IPAddressRange.Test")]
+[assembly: AssemblyProduct("IPAddressRange")]
 [assembly: AssemblyCopyright("Copyright ©  2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("ac94186c-915b-41e0-b481-d241dc243bc3")]
+[assembly: Guid("84d600dd-ca96-44a2-9f70-da3961622d75")]
 
 // Version information for an assembly consists of the following four values:
 //
